@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jordan Sneakers Showcase - 나이키 조던 신발 갤러리</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 3px solid #ff6b35;
+            backdrop-filter: blur(10px);
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #ff6b35, #ff8c42);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 1rem;
+        }
+
+        .intro {
+            text-align: center;
+            margin-bottom: 3rem;
+            background: rgba(255, 107, 53, 0.1);
+            padding: 2rem;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b35;
+        }
+
+        .intro h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: #ff8c42;
+        }
+
+        .intro p {
+            font-size: 1.1rem;
+            color: #ddd;
+            line-height: 1.6;
+        }
+
+        .sneakers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .sneaker-card {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 140, 66, 0.1));
+            border: 2px solid #ff6b35;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            transform: translateY(0);
+        }
+
+        .sneaker-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(255, 107, 53, 0.3);
+            border-color: #ff8c42;
+        }
+
+        .sneaker-image {
+            width: 100%;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 6rem;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 140, 66, 0.2));
+            border-bottom: 2px solid #ff6b35;
+        }
+
+        .sneaker-info {
+            padding: 1.5rem;
+        }
+
+        .sneaker-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #ff8c42;
+        }
+
+        .color-name {
+            display: inline-block;
+            background: #ff6b35;
+            color: #fff;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .description {
+            color: #ccc;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .color-dots {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .dot {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        .stats {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+        }
+
+        .stat-label {
+            color: #aaa;
+        }
+
+        .stat-value {
+            color: #ff8c42;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #888;
+            border-top: 1px solid #ff6b35;
+            margin-top: 4rem;
+        }
+
+        .footer p {
+            margin: 0.5rem 0;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .sneakers-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .intro {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🏀 Jordan Sneakers</h1>
+        <p>나이키 조던 신발 갤러리 - 아이코닉한 컬러 컬렉션</p>
+    </header>
+
+    <div class="container">
+        <div class="intro">
+            <h2>Jordan Legacy</h2>
+            <p>마이클 조던의 전설적인 유산을 담은 나이키 조던 신발 시리즈. 
+            각각의 아이코닉한 색깔로 스타일을 완성하세요.</p>
+        </div>
+
+        <div class="sneakers-grid">
+            <!-- Card 1: Bred -->
+            <div class="sneaker-card">
+                <div class="sneaker-image">👟</div>
+                <div class="sneaker-info">
+                    <h3>Air Jordan 1 Retro</h3>
+                    <span class="color-name">Bred (Black & Red)</span>
+                    <p class="description">
+                        가장 상징적인 조던 신발. 검은색과 빨간색의 완벽한 조화로 
+                        클래식하면서도 강렬한 매력을 자아냅니다.
+                    </p>
+                    <div class="color-dots">
+                        <div class="dot" style="background-color: #000;"></div>
+                        <div class="dot" style="background-color: #ff0000;"></div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-label">출시연도:</span>
+                            <span class="stat-value">1985</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">인기도:</span>
+                            <span class="stat-value">⭐⭐⭐⭐⭐</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Royal -->
+            <div class="sneaker-card">
+                <div class="sneaker-image">👟</div>
+                <div class="sneaker-info">
+                    <h3>Air Jordan 1 High</h3>
+                    <span class="color-name">Royal (Blue & Black)</span>
+                    <p class="description">
+                        깊고 고급스러운 로얄 블루 컬러가 특징. 
+                        우아함과 힘을 동시에 표현하는 프리미엄 버전입니다.
+                    </p>
+                    <div class="color-dots">
+                        <div class="dot" style="background-color: #1f4788;"></div>
+                        <div class="dot" style="background-color: #000;"></div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-label">출시연도:</span>
+                            <span class="stat-value">1985</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">인기도:</span>
+                            <span class="stat-value">⭐⭐⭐⭐⭐</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Chicago -->
+            <div class="sneaker-card">
+                <div class="sneaker-image">👟</div>
+                <div class="sneaker-info">
+                    <h3>Air Jordan 1 Chicago</h3>
+                    <span class="color-name">Chicago (Red & Black)</span>
+                    <p class="description">
+                        시카고 불스의 팀 컬러를 담은 시그니처 모델. 
+                        조던의 위대한 팀 정신을 상징합니다.
+                    </p>
+                    <div class="color-dots">
+                        <div class="dot" style="background-color: #ce1141;"></div>
+                        <div class="dot" style="background-color: #000;"></div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-label">출시연도:</span>
+                            <span class="stat-value">1985</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">인기도:</span>
+                            <span class="stat-value">⭐⭐⭐⭐⭐</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Black Toe -->
+            <div class="sneaker-card">
+                <div class="sneaker-image">👟</div>
+                <div class="sneaker-info">
+                    <h3>Air Jordan 1 Black Toe</h3>
+                    <span class="color-name">Black Toe (White & Black)</span>
+                    <p class="description">
+                        흰색 베이스에 검은색 앞코 디자인. 
+                        세련되면서도 눈에 띄는 콘트라스트가 매력입니다.
+                    </p>
+                    <div class="color-dots">
+                        <div class="dot" style="background-color: #fff;"></div>
+                        <div class="dot" style="background-color: #000;"></div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-label">출시연도:</span>
+                            <span class="stat-value">1985</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">인기도:</span>
+                            <span class="stat-value">⭐⭐⭐⭐</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 5: Metallic Gold -->
+            <div class="sneaker-card">
+                <div class="sneaker-image">👟</div>
+                <div class="sneaker-info">
+                    <h3>Air Jordan 1 Metallic</h3>
+                    <span class="color-name">Metallic Gold</span>
+                    <p class="description">
+                        화려한 메탈릭 골드 디테일이 돋보이는 모델. 
+                        조던의 성공과 영광을 상징하는 럭셔리한 색상입니다.
+                    </p>
+                    <div class="color-dots">
+                        <div class="dot" style="background-color: #000;"></div>
+                        <div class="dot" style="background-color: #ffd700;"></div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-label">출시연도:</span>
+                            <span class="stat-value">1986</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">인기도:</span>
+                            <span class="stat-value">⭐⭐⭐⭐</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 6: Shattered Backboard -->
+            <div class="sneaker-card">
+                <div class="sneaker-image">👟</div>
+                <div class="sneaker-info">
+                    <h3>Air Jordan 1 Shattered</h3>
+                    <span class="color-name">Shattered Backboard</span>
+                    <p class="description">
+                        조던이 대학 시절 백보드를 깼던 사건에서 영감을 받은 
+                        오렌지 블랙 화이트의 대담한 조합입니다.
+                    </p>
+                    <div class="color-dots">
+                        <div class="dot" style="background-color: #ff6b35;"></div>
+                        <div class="dot" style="background-color: #000;"></div>
+                        <div class="dot" style="background-color: #fff;"></div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-label">출시연도:</span>
+                            <span class="stat-value">2015</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">인기도:</span>
+                            <span class="stat-value">⭐⭐⭐⭐⭐</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>🏀 Jordan Sneakers Showcase</p>
+        <p>나이키 조던 신발의 아이코닉한 컬렉션을 소개합니다</p>
+        <p style="margin-top: 1.5rem; font-size: 0.9rem;">© 2024 Jordan Legacy Collection</p>
+    </footer>
+</body>
+</html>
