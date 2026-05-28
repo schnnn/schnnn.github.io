@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Nike Air Jordan shoes introduction page",
   "private": true,
+  "homepage": "https://schnnn.github.io/",
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
