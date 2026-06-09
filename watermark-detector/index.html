@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>워터마크 탐지기</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+KR:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #151821;
+    --border: #232738;
+    --accent: #4af0b4;
+    --accent-dim: rgba(74, 240, 180, 0.12);
+    --warn: #f0a84a;
+    --danger: #f04a6a;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Noto Sans KR', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: clamp(26px, 5vw, 42px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 300;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 740px;
+  }
+
+  /* Drop zone */
+  #dropzone {
+    padding: 52px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+    position: relative;
+  }
+
+  #dropzone:hover, #dropzone.drag-over {
+    background: var(--accent-dim);
+  }
+
+  #dropzone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  }
+
+  .drop-icon {
+    width: 52px; height: 52px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+
+  .drop-label {
+    font-size: 15px;
+    color: var(--text);
+  }
+
+  .drop-label span {
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .drop-hint {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  /* Preview */
+  #preview-area {
+    display: none;
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  #preview-area.visible { display: flex; }
+
+  #preview-img {
+    width: 120px; height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .file-meta { flex: 1; }
+  .file-name { font-family: var(--mono); font-size: 13px; word-break: break-all; margin-bottom: 6px; }
+  .file-size { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  #analyze-btn {
+    display: none;
+    margin: 0 20px 20px;
+    width: calc(100% - 40px);
+    padding: 13px;
+    background: var(--accent);
+    color: #0d0f14;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--sans);
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: opacity 0.2s;
+  }
+
+  #analyze-btn:hover { opacity: 0.85; }
+  #analyze-btn.visible { display: block; }
+  #analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Results */
+  #results {
+    display: none;
+    padding: 20px;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  #results.visible { display: flex; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* Score ring */
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  #score-ring-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+  #score-ring-wrap svg { transform: rotate(-90deg); }
+  #score-text {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-family: var(--mono);
+  }
+  #score-num { font-size: 20px; font-weight: 600; }
+  #score-label { font-size: 9px; color: var(--muted); letter-spacing: 0.1em; }
+
+  .verdict { flex: 1; }
+  .verdict-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .verdict-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* Checks grid */
+  .checks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  @media (max-width: 480px) { .checks-grid { grid-template-columns: 1fr; } }
+
+  .check-item {
+    padding: 12px 14px;
+    background: var(--bg);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .check-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+
+  .check-dot.ok { background: var(--accent); }
+  .check-dot.warn { background: var(--warn); }
+  .check-dot.bad { background: var(--danger); }
+  .check-dot.na { background: var(--muted); }
+
+  .check-name { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+  .check-val { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  /* Canvas for analysis (hidden) */
+  #work-canvas { display: none; }
+
+  /* Frequency canvas */
+  #freq-canvas {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  /* Reset */
+  #reset-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  #reset-btn:hover { border-color: var(--text); color: var(--text); }
+
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(13,15,20,0.3);
+    border-top-color: #0d0f14;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Image Analysis Tool</div>
+  <h1>워터마크 <span>탐지기</span></h1>
+  <p class="subtitle">이미지를 업로드하면 워터마크 존재 여부를 자동으로 분석합니다</p>
+</header>
+
+<div class="card">
+  <div id="dropzone">
+    <input type="file" id="file-input" accept="image/*">
+    <div class="drop-icon">🔍</div>
+    <p class="drop-label"><span>파일 선택</span> 또는 여기에 드래그</p>
+    <p class="drop-hint">PNG · JPG · WEBP · BMP · GIF</p>
+  </div>
+
+  <div id="preview-area">
+    <img id="preview-img" src="" alt="미리보기">
+    <div class="file-meta">
+      <div class="section-label">선택된 파일</div>
+      <div class="file-name" id="fname">—</div>
+      <div class="file-size" id="fsize">—</div>
+    </div>
+  </div>
+
+  <button id="analyze-btn">분석 시작</button>
+
+  <div id="results">
+    <div>
+      <div class="section-label">워터마크 탐지 결과</div>
+      <div class="score-row">
+        <div id="score-ring-wrap">
+          <svg viewBox="0 0 80 80" width="80" height="80">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="#232738" stroke-width="8"/>
+            <circle id="score-arc" cx="40" cy="40" r="32" fill="none" stroke="#4af0b4"
+              stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="201.06" stroke-dashoffset="201.06"
+              style="transition: stroke-dashoffset 0.8s ease, stroke 0.4s"/>
+          </svg>
+          <div id="score-text">
+            <span id="score-num">—</span>
+            <span id="score-label">SCORE</span>
+          </div>
+        </div>
+        <div class="verdict">
+          <div class="verdict-title" id="verdict-title">분석 중…</div>
+          <div class="verdict-desc" id="verdict-desc"></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">세부 검사 항목</div>
+      <div class="checks-grid" id="checks-grid"></div>
+    </div>
+
+    <div>
+      <div class="section-label">밝기 주파수 분포 (DCT 근사)</div>
+      <canvas id="freq-canvas" height="120"></canvas>
+    </div>
+
+    <button id="reset-btn">↩ 다른 이미지 분석</button>
+  </div>
+</div>
+
+<canvas id="work-canvas"></canvas>
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+const previewArea = document.getElementById('preview-area');
+const previewImg = document.getElementById('preview-img');
+const fname = document.getElementById('fname');
+const fsize = document.getElementById('fsize');
+const analyzeBtn = document.getElementById('analyze-btn');
+const results = document.getElementById('results');
+const workCanvas = document.getElementById('work-canvas');
+const freqCanvas = document.getElementById('freq-canvas');
+const resetBtn = document.getElementById('reset-btn');
+
+let currentFile = null;
+
+// Drag & drop
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) loadFile(f);
+});
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) loadFile(fileInput.files[0]);
+});
+
+function loadFile(file) {
+  currentFile = file;
+  const url = URL.createObjectURL(file);
+  previewImg.src = url;
+  fname.textContent = file.name;
+  fsize.textContent = (file.size / 1024).toFixed(1) + ' KB · ' + file.type;
+  previewArea.classList.add('visible');
+  analyzeBtn.classList.add('visible');
+  results.classList.remove('visible');
+}
+
+analyzeBtn.addEventListener('click', runAnalysis);
+resetBtn.addEventListener('click', () => {
+  currentFile = null;
+  fileInput.value = '';
+  previewArea.classList.remove('visible');
+  analyzeBtn.classList.remove('visible');
+  results.classList.remove('visible');
+  dropzone.style.display = '';
+});
+
+function runAnalysis() {
+  analyzeBtn.disabled = true;
+  analyzeBtn.innerHTML = '<span class="spinner"></span>분석 중…';
+
+  const img = new Image();
+  img.onload = () => {
+    setTimeout(() => {
+      const data = analyze(img);
+      showResults(data);
+      analyzeBtn.disabled = false;
+      analyzeBtn.innerHTML = '분석 시작';
+    }, 600);
+  };
+  img.src = previewImg.src;
+}
+
+// ────────────────────────────────────────────────
+// Core analysis (canvas-based heuristics)
+// ────────────────────────────────────────────────
+function analyze(img) {
+  const MAX = 600;
+  const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+  const W = Math.round(img.width * scale);
+  const H = Math.round(img.height * scale);
+
+  workCanvas.width = W; workCanvas.height = H;
+  const ctx = workCanvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, W, H);
+  const px = ctx.getImageData(0, 0, W, H).data;
+
+  // Build grayscale
+  const gray = new Float32Array(W * H);
+  for (let i = 0; i < W * H; i++) {
+    const b = i * 4;
+    gray[i] = 0.299 * px[b] + 0.587 * px[b+1] + 0.114 * px[b+2];
+  }
+
+  const checks = {};
+
+  // 1. Edge density (Sobel)
+  const { edgeDensity, edgeMap } = sobelEdgeDensity(gray, W, H);
+  checks.edge = edgeDensity;
+
+  // 2. Corner concentration — watermarks often cluster in corners
+  const cornerScore = cornerConcentration(edgeMap, W, H);
+  checks.corner = cornerScore;
+
+  // 3. Uniform region with abrupt pattern (low variance area with edges)
+  const { patchScore } = texturePatches(gray, W, H);
+  checks.patch = patchScore;
+
+  // 4. Alpha / transparency presence
+  let hasAlphaData = false;
+  for (let i = 3; i < px.length; i += 4) {
+    if (px[i] < 250 && px[i] > 0) { hasAlphaData = true; break; }
+  }
+  checks.alpha = hasAlphaData;
+
+  // 5. Repeated pattern (simplified autocorrelation via horizontal lines)
+  const repeatScore = detectRepeat(gray, W, H);
+  checks.repeat = repeatScore;
+
+  // 6. Color uniformity anomaly (light semi-transparent overlay)
+  const overlayScore = overlayDetect(px, W, H);
+  checks.overlay = overlayScore;
+
+  // 7. Text-like thin horizontal structure
+  const textScore = textLineDetect(gray, W, H);
+  checks.text = textScore;
+
+  // Frequency spectrum for visualization
+  const freqBins = computeFreqBins(gray, W, H);
+
+  // ── Weighted score ──
+  let score = 0;
+  score += Math.min(edgeDensity / 0.15, 1) * 20;      // global edge density
+  score += Math.min(cornerScore / 0.6, 1) * 25;        // corner concentration
+  score += Math.min(patchScore / 0.5, 1) * 15;         // patch anomaly
+  score += (hasAlphaData ? 1 : 0) * 10;                // transparency
+  score += Math.min(repeatScore / 0.5, 1) * 15;        // repeat pattern
+  score += Math.min(overlayScore / 0.4, 1) * 10;       // overlay
+  score += Math.min(textScore / 0.5, 1) * 5;           // text lines
+
+  score = Math.round(Math.min(score, 100));
+
+  return { score, checks, freqBins, W, H, img };
+}
+
+// ── Sobel edge density ──
+function sobelEdgeDensity(gray, W, H) {
+  const edgeMap = new Float32Array(W * H);
+  let sum = 0, count = 0;
+  for (let y = 1; y < H - 1; y++) {
+    for (let x = 1; x < W - 1; x++) {
+      const idx = y * W + x;
+      const gx = -gray[(y-1)*W+x-1] + gray[(y-1)*W+x+1]
+                 -2*gray[y*W+x-1]   + 2*gray[y*W+x+1]
+                 -gray[(y+1)*W+x-1] + gray[(y+1)*W+x+1];
+      const gy = -gray[(y-1)*W+x-1] - 2*gray[(y-1)*W+x] - gray[(y-1)*W+x+1]
+                 +gray[(y+1)*W+x-1] + 2*gray[(y+1)*W+x] + gray[(y+1)*W+x+1];
+      const mag = Math.sqrt(gx*gx + gy*gy) / 255;
+      edgeMap[idx] = mag;
+      if (mag > 0.1) sum++;
+      count++;
+    }
+  }
+  return { edgeDensity: sum / count, edgeMap };
+}
+
+// ── Corner concentration ──
+function cornerConcentration(edgeMap, W, H) {
+  const cSize = Math.floor(Math.min(W, H) * 0.2);
+  let cornerEdges = 0, totalEdges = 0;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const v = edgeMap[y * W + x];
+      if (v > 0.1) {
+        totalEdges++;
+        const inCorner = (x < cSize || x > W - cSize) && (y < cSize || y > H - cSize);
+        if (inCorner) cornerEdges++;
+      }
+    }
+  }
+  return totalEdges > 0 ? cornerEdges / totalEdges : 0;
+}
+
+// ── Texture patches ──
+function texturePatches(gray, W, H) {
+  const blockSize = 16;
+  const cols = Math.floor(W / blockSize);
+  const rows = Math.floor(H / blockSize);
+  let anomalyCount = 0, total = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      let sum = 0, sum2 = 0, n = 0;
+      for (let dy = 0; dy < blockSize; dy++) {
+        for (let dx = 0; dx < blockSize; dx++) {
+          const v = gray[(r * blockSize + dy) * W + (c * blockSize + dx)];
+          sum += v; sum2 += v * v; n++;
+        }
+      }
+      const mean = sum / n;
+      const variance = sum2 / n - mean * mean;
+      // Low variance (uniform area) but with certain brightness offset
+      if (variance < 150 && mean > 200) anomalyCount++;
+      total++;
+    }
+  }
+  return { patchScore: anomalyCount / total };
+}
+
+// ── Repeat detect (horizontal stripe correlation) ──
+function detectRepeat(gray, W, H) {
+  const rowAverages = new Float32Array(H);
+  for (let y = 0; y < H; y++) {
+    let s = 0;
+    for (let x = 0; x < W; x++) s += gray[y * W + x];
+    rowAverages[y] = s / W;
+  }
+  // Look for periodic patterns at short lags
+  let maxCorr = 0;
+  for (let lag = 4; lag < 40; lag++) {
+    let corr = 0, n = 0;
+    for (let y = lag; y < H; y++) {
+      corr += Math.abs(rowAverages[y] - rowAverages[y - lag]);
+      n++;
+    }
+    const meanDiff = n > 0 ? corr / n : 0;
+    if (meanDiff < 2) maxCorr = Math.max(maxCorr, 1 - meanDiff / 2);
+  }
+  return maxCorr;
+}
+
+// ── Semi-transparent overlay ──
+function overlayDetect(px, W, H) {
+  let uniformCount = 0;
+  const blockSize = 32;
+  const cols = Math.floor(W / blockSize);
+  const rows = Math.floor(H / blockSize);
+  let total = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      let rSum = 0, gSum = 0, bSum = 0, aSum = 0, n = 0;
+      for (let dy = 0; dy < blockSize; dy++) {
+        for (let dx = 0; dx < blockSize; dx++) {
+          const idx = ((r * blockSize + dy) * W + (c * blockSize + dx)) * 4;
+          rSum += px[idx]; gSum += px[idx+1]; bSum += px[idx+2]; aSum += px[idx+3]; n++;
+        }
+      }
+      const avgA = aSum / n;
+      if (avgA > 200 && avgA < 255) uniformCount++;
+      total++;
+    }
+  }
+  return uniformCount / total;
+}
+
+// ── Thin horizontal text lines ──
+function textLineDetect(gray, W, H) {
+  let thinLines = 0;
+  for (let y = 2; y < H - 2; y++) {
+    let darkCount = 0;
+    for (let x = 0; x < W; x++) {
+      if (gray[y * W + x] < 100) darkCount++;
+    }
+    const density = darkCount / W;
+    if (density > 0.05 && density < 0.4) thinLines++;
+  }
+  return thinLines / H;
+}
+
+// ── Frequency bins (simplified DCT-like) ──
+function computeFreqBins(gray, W, H) {
+  const bins = 64;
+  const result = new Float32Array(bins);
+  const sampleY = Math.floor(H / 2);
+  for (let x = 0; x < W; x++) {
+    const v = gray[sampleY * W + x];
+    for (let k = 0; k < bins; k++) {
+      result[k] += v * Math.cos(Math.PI * k * (2 * x + 1) / (2 * W));
+    }
+  }
+  // Normalize
+  let max = 0;
+  for (let k = 0; k < bins; k++) { result[k] = Math.abs(result[k]); max = Math.max(max, result[k]); }
+  if (max > 0) for (let k = 0; k < bins; k++) result[k] /= max;
+  return result;
+}
+
+// ────────────────────────────────────────────────
+// Show results
+// ────────────────────────────────────────────────
+function showResults({ score, checks, freqBins }) {
+  results.classList.add('visible');
+
+  // Score ring
+  const arc = document.getElementById('score-arc');
+  const circumference = 2 * Math.PI * 32;
+  const offset = circumference * (1 - score / 100);
+  arc.style.strokeDashoffset = offset;
+
+  let ringColor = '#4af0b4';
+  if (score >= 60) ringColor = '#f04a6a';
+  else if (score >= 35) ringColor = '#f0a84a';
+  arc.style.stroke = ringColor;
+
+  document.getElementById('score-num').textContent = score;
+  document.getElementById('score-num').style.color = ringColor;
+
+  // Verdict
+  const vtitle = document.getElementById('verdict-title');
+  const vdesc = document.getElementById('verdict-desc');
+  if (score >= 65) {
+    vtitle.textContent = '워터마크 감지됨';
+    vtitle.style.color = '#f04a6a';
+    vdesc.textContent = '이미지에 워터마크 또는 오버레이 패턴이 존재할 가능성이 높습니다. 여러 지표에서 이상 신호가 감지되었습니다.';
+  } else if (score >= 35) {
+    vtitle.textContent = '일부 이상 징후';
+    vtitle.style.color = '#f0a84a';
+    vdesc.textContent = '일부 지표에서 워터마크와 유사한 패턴이 탐지되었습니다. 시각적으로 직접 확인하는 것을 권장합니다.';
+  } else {
+    vtitle.textContent = '워터마크 없음';
+    vtitle.style.color = '#4af0b4';
+    vdesc.textContent = '분석된 지표상 뚜렷한 워터마크 신호가 없습니다. 이미지가 깨끗한 것으로 판단됩니다.';
+  }
+
+  // Checks
+  const grid = document.getElementById('checks-grid');
+  grid.innerHTML = '';
+
+  const items = [
+    { key: 'corner', label: '코너 집중 패턴', fmt: v => (v * 100).toFixed(1) + '%', thresh: [0.3, 0.6] },
+    { key: 'edge', label: '전체 엣지 밀도', fmt: v => (v * 100).toFixed(1) + '%', thresh: [0.08, 0.15] },
+    { key: 'patch', label: '밝은 균일 영역', fmt: v => (v * 100).toFixed(1) + '%', thresh: [0.1, 0.3] },
+    { key: 'overlay', label: '반투명 오버레이', fmt: v => (v * 100).toFixed(1) + '%', thresh: [0.05, 0.2] },
+    { key: 'repeat', label: '반복 수평 패턴', fmt: v => (v * 100).toFixed(1) + '%', thresh: [0.2, 0.5] },
+    { key: 'text', label: '텍스트형 라인', fmt: v => (v * 100).toFixed(1) + '%', thresh: [0.05, 0.15] },
+    { key: 'alpha', label: '투명도 채널', fmt: v => v ? '감지됨' : '없음', isBoolean: true },
+  ];
+
+  items.forEach(item => {
+    const val = checks[item.key];
+    let dotClass = 'ok';
+    if (item.isBoolean) {
+      dotClass = val ? 'bad' : 'ok';
+    } else {
+      if (val >= item.thresh[1]) dotClass = 'bad';
+      else if (val >= item.thresh[0]) dotClass = 'warn';
+    }
+
+    const el = document.createElement('div');
+    el.className = 'check-item';
+    el.innerHTML = `
+      <div class="check-dot ${dotClass}"></div>
+      <div>
+        <div class="check-name">${item.label}</div>
+        <div class="check-val">${item.fmt(val)}</div>
+      </div>
+    `;
+    grid.appendChild(el);
+  });
+
+  // Frequency chart
+  drawFreqChart(freqBins, score);
+}
+
+function drawFreqChart(bins, score) {
+  const canvas = freqCanvas;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth || 680;
+  const H = 120;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  ctx.fillStyle = '#0d0f14';
+  ctx.fillRect(0, 0, W, H);
+
+  const barW = W / bins;
+  const color = score >= 65 ? '#f04a6a' : score >= 35 ? '#f0a84a' : '#4af0b4';
+
+  for (let k = 0; k < bins; k++) {
+    const h = bins[k] * (H - 20);
+    const x = k * barW;
+    ctx.fillStyle = color + (k < 4 ? 'ff' : '99');
+    ctx.fillRect(x + 1, H - h - 10, barW - 2, h);
+  }
+
+  // Axis label
+  ctx.fillStyle = '#6b7280';
+  ctx.font = '10px IBM Plex Mono, monospace';
+  ctx.fillText('저주파 (DC)', 4, H - 2);
+  ctx.textAlign = 'right';
+  ctx.fillText('고주파', W - 4, H - 2);
+}
+</script>
+</body>
+</html>
